@@ -1,0 +1,97 @@
+#!/bin/bash
+
+set -e
+
+function usage() {
+    echo "$0 --net=NET_NAME --node=NODE_NAME --public-ip=PUBLIC_IP --private-ip=PRIVATE_IP [--connect-to=IP1 ...] [--up]"
+    exit 1
+}
+
+for i in "$@"
+do
+    case $i in
+        -n=*|--net=*)
+            NET_NAME="${i#*=}"
+            shift # past argument=value
+            ;;
+        -o=*|--node=*)
+            NODE_NAME="${i#*=}"
+            shift # past argument=value
+            ;;
+        -v=*|--private-ip=*)
+            PRIVATE_IP="${i#*=}"
+            shift # past argument=value
+            ;;
+        -p=*|--public-ip=*)
+            PUBLIC_IP="${i#*=}"
+            shift # past argument=value
+            ;;
+        -c=*|--connect-to=*)
+            CONNECT_TO="$CONNECT_TO ${i#*=}"
+            shift # past argument=value
+            ;;
+        -i=*|--interface=*)
+            INTERFACE="${i#*=}"
+            shift # past argument=value
+            ;;
+        --up)
+            TINC_UP=YES
+            ;;
+        *)
+            # unknown option
+            usage
+            ;;
+    esac
+done
+
+if [ "_$NET_NAME" = "_" ]; then usage; fi
+if [ "_$NODE_NAME" = "_" ]; then usage; fi
+if [ "_$PRIVATE_IP" = "_" ]; then usage; fi
+if [ "_$PUBLIC_IP" = "_" ]; then usage; fi
+
+if [ "_$INTERFACE" = "_" ]; then
+    INTERFACE=tun0
+fi
+
+function tinc() {
+    docker run -it --rm --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume /srv/tinc:/etc/tinc jenserat/tinc -n $NET_NAME "$@"
+}
+
+# Initialize configuration file
+tinc init $NODE_NAME
+
+# Setup host file
+# Declare public and private IPs in the host file, /srv/tinc/NET/hosts/HOST
+echo "Address = $PUBLIC_IP" >> /srv/tinc/$NET_NAME/hosts/$NODE_NAME
+echo "Subnet = $PRIVATE_IP/32" >> /srv/tinc/$NET_NAME/hosts/$NODE_NAME
+
+# Tweak the config to add our particular setup
+tinc add AddressFamily ipv4
+tinc add Device /dev/net/tun
+tinc add Interface $INTERFACE
+if [ "_$CONNECT_TO" != "_" ]; then
+    for i in $CONNECT_TO; do
+        tinc add ConnectTo $i
+    done
+fi
+
+# Edit the tinc-up script
+cat << EOF > /srv/tinc/$NET_NAME/tinc-up
+#!/bin/sh
+ifconfig \$INTERFACE $PRIVATE_IP netmask 255.255.255.0
+EOF
+
+cat << EOF > /srv/tinc/$NET_NAME/tinc-down
+#!/bin/sh
+ifconfig \$INTERFACE down
+EOF
+
+chmod +x /srv/tinc/$NET_NAME/tinc-up
+chmod +x /srv/tinc/$NET_NAME/tinc-down
+
+if [ "_$TINC_UP" != "_" ]; then
+    NAME=tinc_$NET_NAME_$NODE_NAME
+    docker run -d --restart=always --name=$NAME --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume /srv/tinc:/etc/tinc jenserat/tinc -n $NET_NAME start -D
+    echo "Docker container started with name: $NAME"
+fi
+
