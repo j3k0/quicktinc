@@ -3,7 +3,20 @@
 set -e
 
 function usage() {
-    echo "$0 --net=NET_NAME --node=NODE_NAME --public-ip=PUBLIC_IP --private-ip=PRIVATE_IP [--connect-to=IP1 ...] [--up]"
+    echo "
+Usage:
+    $0 [OPTIONS]
+
+Options:
+    --net=NET_NAME           Network name (required)
+    --node=NODE_NAME         Node name (required)
+    --public-ip=PUBLIC_IP    Node's public IP (required)
+    --private-ip=PRIVATE_IP  Node's private IP (required)
+    --connect-to=HOST        Address of another node (optional, repeatable)
+    --interface=tun0         Network interface to create (optional, default=tun0)
+    --up                     Also start the daemon
+
+"
     exit 1
 }
 
