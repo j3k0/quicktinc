@@ -2,6 +2,12 @@
 
 Here's a script to quickly setup a VPN using tinc. This makes use of docker, image `jenserat/tinc`. You basically only have to install Docker to get started.
 
+## Getting Started
+
+You can find a [tutorial to setup a mini VPN with quicktinc here](https://fovea.cc/blog/index.php/docker-on-tinc-in-docker/).
+
+## Usage
+
 ```
 Usage:
 ./quicktinc [OPTIONS]
