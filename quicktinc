@@ -12,10 +12,14 @@ Options:
     --node=NODE_NAME         Node name (required)
     --public-ip=PUBLIC_IP    Node's public IP (required)
     --private-ip=PRIVATE_IP  Node's private IP (required)
-    --connect-to=HOST        Address of another node (optional, repeatable)
+    --connect-to=HOST        Name of another node (optional, repeatable)
     --interface=tun0         Network interface to create (optional, default=tun0)
     --up                     Also start the daemon
 
+Example:
+    $0 --net=demonet --node=node23 --public-ip=8.9.10.11 --private-ip=10.0.0.23 --connect-to=node1 --connect-to=node2 --up
+
+Report bugs to <https://github.com/j3k0/quicktinc>
 "
     exit 1
 }

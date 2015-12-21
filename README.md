@@ -17,7 +17,7 @@ Options:
    --node=NODE_NAME         Node name (required)
    --public-ip=PUBLIC_IP    Node's public IP (required)
    --private-ip=PRIVATE_IP  Node's private IP (required)
-   --connect-to=HOST        Address of another node (optional, repeatable)
+   --connect-to=HOST        Name of another node (optional, repeatable)
    --interface=tun0         Network interface to create (optional, default=tun0)
    --up                     Also start the daemon
 ```
