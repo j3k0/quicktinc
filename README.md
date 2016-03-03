@@ -19,6 +19,7 @@ Options:
    --private-ip=PRIVATE_IP  Node's private IP (required)
    --connect-to=HOST        Name of another node (optional, repeatable)
    --interface=tun0         Network interface to create (optional, default=tun0)
+   --config=/srv/tinc       Where to save tinc networks (optional, default=/srv/tinc)
    --up                     Also start the daemon
 ```
 
@@ -27,4 +28,3 @@ Options:
 (c)2015, Jean-Christophe Hoelt
 
 Published under GPL v2.
-
