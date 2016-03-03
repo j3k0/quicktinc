@@ -14,6 +14,7 @@ Options:
     --private-ip=PRIVATE_IP  Node's private IP (required)
     --connect-to=HOST        Name of another node (optional, repeatable)
     --interface=tun0         Network interface to create (optional, default=tun0)
+    --config=/srv/tinc       Where to save tinc networks (optional, default=/srv/tinc)
     --up                     Also start the daemon
 
 Example:
@@ -51,6 +52,10 @@ do
             INTERFACE="${i#*=}"
             shift # past argument=value
             ;;
+        -C=*|--config=*)
+            TINC_HOME="${i#*=}"
+            shift # past argument=value
+            ;;
         --up)
             TINC_UP=YES
             ;;
@@ -69,18 +74,21 @@ if [ "_$PUBLIC_IP" = "_" ]; then usage; fi
 if [ "_$INTERFACE" = "_" ]; then
     INTERFACE=tun0
 fi
+if [ "_$TINC_HOME" = "_" ]; then
+    TINC_HOME=/srv/tinc
+fi
 
 function tinc() {
-    docker run -it --rm --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume /srv/tinc:/etc/tinc jenserat/tinc -n $NET_NAME "$@"
+    docker run -it --rm --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume $TINC_HOME:/etc/tinc jenserat/tinc -n $NET_NAME "$@"
 }
 
 # Initialize configuration file
 tinc init $NODE_NAME
 
 # Setup host file
-# Declare public and private IPs in the host file, /srv/tinc/NET/hosts/HOST
-echo "Address = $PUBLIC_IP" >> /srv/tinc/$NET_NAME/hosts/$NODE_NAME
-echo "Subnet = $PRIVATE_IP/32" >> /srv/tinc/$NET_NAME/hosts/$NODE_NAME
+# Declare public and private IPs in the host file, CONFIG/NET/hosts/HOST
+echo "Address = $PUBLIC_IP" >> $TINC_HOME/$NET_NAME/hosts/$NODE_NAME
+echo "Subnet = $PRIVATE_IP/32" >> $TINC_HOME/$NET_NAME/hosts/$NODE_NAME
 
 # Tweak the config to add our particular setup
 tinc add AddressFamily ipv4
@@ -93,22 +101,21 @@ if [ "_$CONNECT_TO" != "_" ]; then
 fi
 
 # Edit the tinc-up script
-cat << EOF > /srv/tinc/$NET_NAME/tinc-up
+cat << EOF > $TINC_HOME/$NET_NAME/tinc-up
 #!/bin/sh
 ifconfig \$INTERFACE $PRIVATE_IP netmask 255.255.255.0
 EOF
 
-cat << EOF > /srv/tinc/$NET_NAME/tinc-down
+cat << EOF > $TINC_HOME/$NET_NAME/tinc-down
 #!/bin/sh
 ifconfig \$INTERFACE down
 EOF
 
-chmod +x /srv/tinc/$NET_NAME/tinc-up
-chmod +x /srv/tinc/$NET_NAME/tinc-down
+chmod +x $TINC_HOME/$NET_NAME/tinc-up
+chmod +x $TINC_HOME/$NET_NAME/tinc-down
 
 if [ "_$TINC_UP" != "_" ]; then
     NAME=tinc_$NET_NAME_$NODE_NAME
-    docker run -d --restart=always --name=$NAME --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume /srv/tinc:/etc/tinc jenserat/tinc -n $NET_NAME start -D
+    docker run -d --restart=always --name=$NAME --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume $TINC_HOME:/etc/tinc jenserat/tinc -n $NET_NAME start -D
     echo "Docker container started with name: $NAME"
 fi
-
