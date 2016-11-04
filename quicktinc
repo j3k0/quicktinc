@@ -79,7 +79,7 @@ if [ "_$TINC_HOME" = "_" ]; then
 fi
 
 function tinc() {
-    docker run -it --rm --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume $TINC_HOME:/etc/tinc jenserat/tinc -n $NET_NAME "$@"
+    docker run --rm --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume $TINC_HOME:/etc/tinc jenserat/tinc -n $NET_NAME "$@"
 }
 
 # Initialize configuration file
