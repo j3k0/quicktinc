@@ -79,7 +79,7 @@ if [ "_$TINC_HOME" = "_" ]; then
 fi
 
 function tinc() {
-    docker run --rm --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume $TINC_HOME:/etc/tinc jenserat/tinc -n $NET_NAME "$@"
+    docker run --rm --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume $TINC_HOME:/etc/tinc jeko/tinc -n $NET_NAME "$@"
 }
 
 # Initialize configuration file
@@ -116,6 +116,6 @@ chmod +x $TINC_HOME/$NET_NAME/tinc-down
 
 if [ "_$TINC_UP" != "_" ]; then
     NAME=tinc_$NET_NAME_$NODE_NAME
-    docker run -d --restart=always --name=$NAME --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume $TINC_HOME:/etc/tinc jenserat/tinc -n $NET_NAME start -D
+    docker run -d --restart=always --name=$NAME --net=host --device=/dev/net/tun --cap-add NET_ADMIN --volume $TINC_HOME:/etc/tinc jeko/tinc -n $NET_NAME start -D
     echo "Docker container started with name: $NAME"
 fi
